@@ -1,0 +1,130 @@
+---
+title: "spatially-explicit livestock resilience model"
+author: "Florian D. Schneider"
+output: html_document
+runtime: shiny
+---
+
+
+This cellular automata model includes global accelerating and decelerating feedbacks on mortality and grazing.
+
+```{r, echo=FALSE}
+
+defparms <- list(
+    m = 0.05,
+    r = 1,
+    b = 0.2, 
+    K = 0.9, 
+    a = 0.3,
+    h = 13,
+    L = 5, 
+    alpha = 0,
+    q = 0,
+    c = 0.2,
+    f = 0.9,
+    v = 0,
+    p = 0
+  )
+  
+```
+
+### growth parameters
+
+The basic assumption is logistic plant growth, i.e. growth goes to zero as the carrying capacity is approached (decelerating effect). 
+
+As an accelerating feedback we add water runoff, which reduces growth at low cover. 
+As local feedbacks, we assume local competition, reducing the carrying capacity at high local cover, and local facilitation, compensating for poor environmental quality (a value of one restituates the maximal growth rate)
+
+
+```{r, echo=FALSE}
+
+inputPanel(
+  sliderInput("r", label = "max. growth rate:",
+              min = 0.0, max = 3, value = defparms$r, step = 0.01),
+  sliderInput("b", label = "environmental quality:",
+              min = 0.0, max = 1, value = defparms$b, step = 0.01),
+  sliderInput("K", label = "carrying capacity:",
+              min = 0.0, max = 1, value = defparms$K, step = 0.01),
+  sliderInput("alpha", label = "water runoff:",
+              min = 0.0, max = 1, value = defparms$alpha, step = 0.01),
+  sliderInput("f", label = "local facilitation:",
+              min = 0.0, max = 1, value = defparms$f, step = 0.01),
+  sliderInput("c", label = "local competition:",
+              min = 0.0, max = 1, value = defparms$c, step = 0.01)
+)
+
+  
+```
+
+### mortality parameters
+
+The basic assumption is a constant intrinsic mortality of plants and a type II functional response, i.e. grazing mortality saturates with cover (decelerating effect). 
+
+As an additional accelerating effect we assume the search efficiency to be lowest at low cover and increase with cover, turning the function into a type III functional response.
+
+Local feedbacks are local attractivity of vegetated patches, increasing the search efficiency, and local protection (associational resistance) which reduces the maximum feeding rate. 
+
+```{r, echo=FALSE}
+
+inputPanel(
+  sliderInput("m", label = "intrinsic mortality:",
+              min = 0.0, max = 1, value = defparms$m, step = 0.01),
+  sliderInput("a", label = "search efficiency:",
+              min = 0.0, max = 1, value = defparms$a, step = 0.01), 
+  sliderInput("h", label = "handling time:",
+              min = 0.0, max = 200, value = defparms$h, step = 1), 
+  sliderInput("L", label = "livestock units:",
+              min = 0.0, max = 100, value = defparms$L, step = 1),
+  sliderInput("q", label = "hill coefficient:",
+              min = 0.0, max = 1, value = defparms$q, step = 0.01),
+  sliderInput("v", label = "local attractivity:",
+              min = 0.0, max = 1, value = defparms$v, step = 0.01),
+  sliderInput("p", label = "local protection:",
+              min = 0.0, max = 1, value = defparms$p, step = 0.01)
+)
+
+  
+```
+
+### initial conditions
+```{r, echo=FALSE}
+
+
+inputPanel(
+    sliderInput("rho_ini", label = "initial plant cover:",
+              min = 0.0, max = 1, value = 0.9, step = 0.01)
+  )
+
+renderPlot({
+
+  require(caspr)
+  
+ parms <- list(
+  m = as.numeric(input$m),
+  r = as.numeric(input$r),
+  b = as.numeric(input$b),
+  K = as.numeric(input$K),
+  a = as.numeric(input$a), 
+  h = as.numeric(input$h),
+  L = as.numeric(input$L),
+  alpha = as.numeric(input$alpha), 
+  q = as.numeric(input$q),
+  f = as.numeric(input$f),
+  c = as.numeric(input$c),
+  v = as.numeric(input$v),
+  p = as.numeric(input$p) 
+  )
+ 
+
+ l <- caspr::init_landscape(states = c("1","0"), cover = c(input$rho_ini, 1-input$rho_ini) ) 
+ spexmodel <- caspr::ca(l, livestock, parms, t_max = 100, t_min = 100, saveeach = 50)
+  
+  layout(matrix(c(1,0,2,0,3, 4,4,4,4,4), byrow = TRUE, ncol = 5), height = c(1,2))
+  par(mar = c(1,1,1,1))
+  plot(spexmodel$landscapes[[1]])
+  plot(spexmodel$landscapes[[2]])
+  plot(spexmodel$landscapes[[3]])
+ par(mar = c(4,4,0,2), las = 1, bty = "l")
+  plot(spexmodel)
+} )
+```
