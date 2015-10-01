@@ -1,0 +1,97 @@
+---
+title: "Simulations of livestock resilience model with caspr"
+author: "Florian D. Schneider"
+date: "October 1st, 2015"
+output: rmarkdown::tufte_handout
+---
+
+
+## The livestock resilience model
+
+The model was designed as a simplification of our previously developed grazing model. Besides reflecting the mechanisms of positive local feedbacks, local facilitation and associational resistance, it also implements negative local feedbacks, such as competition and attractant-decoy effects.
+
+### parameters
+
+
+
+## The caspr package
+
+
+### Installation
+
+Installation instructions and further information can be found on the package [repository website on Github](https://github.com/fdschneider/caspr) and the [package vignette](https://github.com/fdschneider/caspr/blob/master/vignettes/caspr.Rmd). 
+
+In short, you only need a running version of R installed on your computer. All package dependencies will be installed automatically. Launch R and run: 
+
+```{r, eval = FALSE}
+install.packages("devtools")
+devtools::install_github("fdschneider/caspr")
+```
+
+Then, once installed, you will have to call the library each time you start a new R session
+
+```{r}
+library(caspr)
+```
+
+### run simulations
+
+The package is capable of running a couple of different models. For our project, I added the livestock resilience model to the package. You can review it's parameters and specifications by typing
+
+```{r, eval = FALSE}
+?livestock
+```
+
+To run a model simulation, you have to provide an initial landscape object, i.e. a grid of cells that matches the specifications of the model. 
+
+```{r}
+l <- init_landscape(states = c("1","0"), cover = c(0.2,0.8))
+plot(l)
+```
+
+Then, you can start a simulation using the default parameters (returning a warning at the end of the simulation) with
+
+```{r}
+run <- ca(l, model = livestock)
+plot(run)
+summary(run)
+```
+
+The `plot()` function plots the timeseries of the vegetation cover (cover of cell state "1") and the `summary()` function returns the mean cover of all potential cell states. 
+
+Of course, you will want to modify the parameters (remember that `?livestock ` shows you the description of all parameters):
+
+```{r}
+pp <- livestock$parms
+pp$b <- 0.1
+pp$p <- 0.2
+pp$L <- 4
+run <- ca(l, model = livestock, parms = pp, t_max = 400)
+plot(run)
+```
+
+### access the simulation data
+
+If you want to analyse the timeseries of vegetation cover you can extract it from the output object of the simulation, which is now stored in the R variable `run`.
+
+For example you can access the parameters that were used to run the model by calling
+
+```{r}
+run$model$parms
+```
+
+
+You also can extract the vegetation cover for each single timestep and save it into an R object. To analyse variation over time, we usually would only look at a period before the end of the simulation. 
+
+```{r}
+t <- tail(run$time,100)
+cover <- tail(run$cover[['1']], 100)
+
+summary(cover)
+```
+
+There are further functions currently under development that allow to run a whole array of parameters. I will keep you updated about this. 
+
+### contribute 
+
+You always can check the current state of the development for the caspr package and report issues or bugs on the [GitHub issue tracker](https://github.com/fdschneider/caspr/issues).
