@@ -2,22 +2,28 @@
 title: "Simulations of livestock resilience model with caspr"
 author: "Florian D. Schneider"
 date: "October 1st, 2015"
-output: rmarkdown::tufte_handout
+output: 
+  rmarkdown::tufte_handout:
+    fig_width: 6
+    fig_height: 4
 ---
 
 
-## The livestock resilience model
+# The livestock resilience model
 
 The model was designed as a simplification of our previously developed grazing model. Besides reflecting the mechanisms of positive local feedbacks, local facilitation and associational resistance, it also implements negative local feedbacks, such as competition and attractant-decoy effects.
 
-### parameters
+**Caution: The model is still preliminary!** Right now, it responds to landscape size, which should not be the case. I need to refine the parameters of the livestock functional response ($a$, $h$ and $q$) to be independent of spacial extent of the lattice. 
+
+## parameters
+
+(More model details will follow)
 
 
 
-## The caspr package
+# The caspr package
 
-
-### Installation
+## Installation
 
 Installation instructions and further information can be found on the package [repository website on Github](https://github.com/fdschneider/caspr) and the [package vignette](https://github.com/fdschneider/caspr/blob/master/vignettes/caspr.Rmd). 
 
@@ -34,21 +40,19 @@ Then, once installed, you will have to call the library each time you start a ne
 library(caspr)
 ```
 
-### run simulations
+## run simulations
 
-The package is capable of running a couple of different models. For our project, I added the livestock resilience model to the package. You can review it's parameters and specifications by typing
-
-```{r, eval = FALSE}
-?livestock
-```
+The package is capable of running a couple of different models. For our project, I added the livestock resilience model to the package. You can review it's parameters and specifications by typing `?livestock`.
 
 To run a model simulation, you have to provide an initial landscape object, i.e. a grid of cells that matches the specifications of the model. 
 
-```{r}
-l <- init_landscape(states = c("1","0"), cover = c(0.2,0.8))
+```{r, fig.width = 2, fig.height = 2, fig.marging = TRUE}
+l <- init_landscape(states = c("1","0"), cover = c(0.2,0.8), width = 100)
+par(mar = c(0,0,0,0))
 plot(l)
 ```
 
+The option `width` allows to increase or decrease the landscape size (now $100 x 100$ cells).
 Then, you can start a simulation using the default parameters (returning a warning at the end of the simulation) with
 
 ```{r}
@@ -56,6 +60,8 @@ run <- ca(l, model = livestock)
 plot(run)
 summary(run)
 ```
+
+The function `ca()` runs the simulation. This might take between 10 seconds and a couple of minutes, depending on your computer.
 
 The `plot()` function plots the timeseries of the vegetation cover (cover of cell state "1") and the `summary()` function returns the mean cover of all potential cell states. 
 
@@ -65,19 +71,21 @@ Of course, you will want to modify the parameters (remember that `?livestock ` s
 pp <- livestock$parms
 pp$b <- 0.1
 pp$p <- 0.2
-pp$L <- 4
-run <- ca(l, model = livestock, parms = pp, t_max = 400)
+pp$L <- 12
+run <- ca(l, model = livestock, parms = pp, t_max = 200)
 plot(run)
 ```
 
-### access the simulation data
+`t_max` sets the maximal number of timesteps. More options for the function `ca()` are available by calling `?ca`. 
+
+## access the simulation data
 
 If you want to analyse the timeseries of vegetation cover you can extract it from the output object of the simulation, which is now stored in the R variable `run`.
 
 For example you can access the parameters that were used to run the model by calling
 
 ```{r}
-run$model$parms
+as.data.frame(run$model$parms)
 ```
 
 
@@ -92,6 +100,6 @@ summary(cover)
 
 There are further functions currently under development that allow to run a whole array of parameters. I will keep you updated about this. 
 
-### contribute 
+## contribute 
 
 You always can check the current state of the development for the caspr package and report issues or bugs on the [GitHub issue tracker](https://github.com/fdschneider/caspr/issues).
