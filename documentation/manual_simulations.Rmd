@@ -13,8 +13,6 @@ output:
 
 The model was designed as a simplification of our previously developed grazing model. Besides reflecting the mechanisms of positive local feedbacks, local facilitation and associational resistance, it also implements negative local feedbacks, such as competition and attractant-decoy effects.
 
-**Caution: The model is still preliminary!** Right now, it responds to landscape size, which should not be the case. I need to refine the parameters of the livestock functional response ($a$, $h$ and $q$) to be independent of spacial extent of the lattice. 
-
 ## parameters
 
 (More model details will follow)
