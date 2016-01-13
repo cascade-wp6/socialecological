@@ -1,0 +1,255 @@
+---
+title: "Probabilistic simulations of livestock resilience"
+author: "Florian D. Schneider"
+date: "14.01.2016"
+output: 
+  rmarkdown::tufte_handout:
+    fig_width: 6
+    fig_height: 4
+---
+
+
+In this document I am exploring how to use the caspr package can be used for a probabilistic assessment of future events in a landscape. This adds three elements to the previous version of the cellular automata model: 
+
+1. random noise on parameters to simulate climatic variation or habitat heterogeneity
+2. setting a timeseries of parameters (e.g. for climate change or rotational management)
+3. a function that assesses the frequency of potential outcomes of the lattice over a particular period in time
+
+I will discuss possibilities to achieve that in the following paragraphs. 
+
+# Parameter manipulations
+
+## Climatic variability
+
+To add an element of climatic variation, the model includes a parameter `sigma` which sets the standard deviation of a random number around the environmental quality $b$. This defaults to value 0, which means that environmental quality equals $b$ at each timestep. If `sigma` takes any value larger than 0, at each update, a gaussian random number is generated with mean $b$ and standard devation `sigma`, with a lower limit of 0. This number subsitutes environmental quality during the given year. 
+
+```{r, eval = FALSE}
+
+  climate <- rnorm(1, b, sigma)
+  if(climate < 0) climate = 0
+  
+  ...
+  
+  growth <- with(parms, (r * (climate + (1-climate)*f*q_one_one) * rho_one^(1 + alpha) * ( 1 - (rho_one / (K * (1-c*q_one_one) ))) / (1 - rho_one))  *1/subs)  # recolonisation rates of all cells 
+    
+```
+
+The environmental quality thus varies from year to year. 
+
+```{r, echo = FALSE}
+library(caspr)
+
+par(mar = c(4,4,1,4))
+plot(NA,NA,xlim = c(0,100), ylim = c(0,1), ylab = "vegetation cover", xlab = "time (years)")
+axis(4)
+mtext("environmental quality (b)", side = 4, line = 2)
+inicover <- 0.6
+l <- init_landscape(c("1","0"), cover = c(inicover,1-inicover), width = 100)
+p <- livestock$parms
+p$b = 0.5
+p$L = 5
+p$sigma = 0.01
+
+     temp <- with(p, rnorm(100, b, sigma))
+     (temp[temp < 0] <- 0)
+     
+lines(temp)     
+run <- ca(l, livestock, p, t_max = 100, saveeach = 100)
+lines(run$time, run$cover[[1]])
+
+
+p$sigma = 0.1
+
+     temp <- with(p, rnorm(100, b, sigma))
+     (temp[temp < 0] <- 0)
+     
+lines(temp, col = "red")     
+run <- ca(l, livestock, p, t_max = 100, saveeach = 100)
+lines(run$time, run$cover[[1]], col = "red")
+
+```
+
+It seems, though, that high climatic variability (red scenario) has only little effect on the simulation outcome. Rare events might cause a phase transition in close-to-critical systems. 
+
+Other parameters could be subject to noise as well, e.g. the carrying capacity or water runoff of the landscape might vary strongly due to slope and exponation. This could be implemented easily by adding further sigma variables that turn the parameter from a constant to a probabilistic bell shaped distribution. This would allow to introduce uncertainty in the model. 
+
+Parameters that  are associated to plant traits, like the attractant decoy, facilitation or associational resistance effects, are unlikely to vary between landscapes and should be considered as constants. 
+
+## providing a climatic or management scenario
+
+Manipulations to the parameters over time will be required for the intended research questions. Either because the questions address the impacts of ongoing climate change on arid landscape stability without intervention, or because the consequences of intervention by management methods are to be assessed. In both cases, a predefined time sequence of a parameter needs to be fed into the updating procedure of the cellular automata. This will be achieved by providing the model with vectors instead of single value parameters. Each vector has to have the length of the requested timeseries or it will be recycled, e.g. for rotational management measures. 
+
+Thus, as required by the caspr package, the parameter set is given as a list of parameters, but each list entry can be either a single value or a vector representing the sequence of parameter values over time (in years). This is inflated by the requested time to evaluate using the function `parms_timeseries()` of caspr. 
+
+```{r, echo = FALSE}
+
+p <- list(  
+  r = 1.0,  # max. regeneration rate of plants
+  b = seq(0.2,0.05, length = 100)*rnorm(100, 1, 0.2),  # environmental quality
+  sigma = 0, # random annual variation of environmental quality
+  f = 0.9,  # local facilitation
+  alpha = 0, # water runoff
+  K = 0.7, # carrying capacity of the system
+  c = 0.2, # local competition
+  m = 0.05, # intrinsic mortality of plants (inverse of av. lifespan)
+  v = 0.2, # attractant-decoy
+  p = 0.99, # associational resistance
+  L = rep(c(0,15), each = 2), # Livestock density
+  q = 0, # hill exponent of functional response
+  h = 50, # handling time 
+  a = 1.0 # attack rate of livestock
+) 
+
+
+plist <- parms_timeseries(p, 100)
+
+l <- init_landscape(c("1","0"), cover = c(inicover,1-inicover), width = 100)
+
+run <- ca(l, livestock, plist, t_max = 100, saveeach = 5)
+plot(run)
+lines(1:100, p$b, col = "blue")
+
+```
+
+Interestingly, some parameters do have the power to dominate the stochastic variation of the cellular automata spatial dynamics. In this example, after an initial decline of cover to steady state, the decline in environmental quality is well compensated by the ability to cope with aridity through local facilitation (y 20-50). The rotational grazing pressure has little permanent effect until a critical threshold of environmental quality is hit (y70). Then vegetation collapses within few decades.  
+
+
+# Probability distribution of outcomes
+
+In  a next step, we want to explore the space of possible outcomes under a given set of parameters. This is achieved by running the model iteratively, starting from steady state situations, and by mapping the trajectories and analysing the final state of the model after a couple of years.
+
+## timeseries simulations and steady state
+
+All simulations have to start out from a pre-formed landscape with realistic patch structure, since the spatial structure is what determines the future development of the landscape. That is particularly important if looking at only short time spans such as 5 or 50 years. For now, we assume that steady state is achieved after a period of 100 years, as seems realistic and robust looking at the following 20 timeseries that start from random initial cover. 
+
+
+```{r, echo = FALSE}
+plot(NA,NA,xlim = c(0,125), ylim = c(0,1), ylab = "vegetation cover", xlab = "time (years)")
+abline(v=101, col = "grey70")
+
+
+for(i in 1:20) {
+  inicover <- runif(1, 0,1)
+l <- init_landscape(c("1","0"), cover = c(inicover,1-inicover), width = 100)
+p <- livestock$parms
+p$b = 0.1
+p$L = 10
+steady <- ca(l, livestock, p, t_max = 100, saveeach = 100)
+lines(steady$cover[[1]]~ steady$time)
+t_0 <- steady$landscapes[[2]]
+
+  p$b <- 0.2
+temp <- ca(t_0, livestock, p, t_max = 25)
+lines(temp$time+101,temp$cover[[1]], col = "#00000030") 
+}
+
+
+```
+
+## functions for updating
+
+The goal is to run iterative simulations on a given parameter set to evaluate the distribution of outcomes after certain time periods, e.g. 5 years , 10 years, 20 years.
+
+Therefore, I wrote a set of functions which take a list of landscape objects (created by function `init_list()`) and updates it with the given parameter set for the requested time period (by applying function `update_list()`). If a parallel backend is provided, the single runs are processesed in parallel. The output is an updated list of landscape objects which can be summarized into a report of the distribution of outcomes. 
+
+```{r}
+library(foreach)
+
+# function init_list() creates a list of initial landscape objects 
+
+init_list <- function(n, cover = NULL, width = 200, height = width, runif_range = c(0,1) ) {
+
+  foreach(i = 1:n) %do% {
+    
+    if(is.null(cover)) inicover <- runif(1, runif_range[1], runif_range[2])
+    init_landscape(c("1","0"), cover = c(inicover,1-inicover), width = width)
+    
+  }
+
+}
+
+# function update_list() feeds any list of landscape objects into the simulation
+#    function ca() of the caspr package. This returns an updated version of the
+#    entire list that can be plotted or analysed afterwards.
+
+update_list <- function(list, t_eval , parms) {
+ 
+  foreach(l = list) %do% {
+    
+    run <- ca(l, livestock, parms_timeseries(parms, t_eval), t_max = t_eval, saveeach = t_eval)
+    return(run$landscape[[2]])
+    
+  }
+  
+}
+
+```
+
+
+## visualisation and analysis 
+
+Violin plots represent the distribution of the iterations current cover and can be interpreted as  probabilities. The distribution pattern varies with the number of replicates, the amount of environmental noise and size of the landscape. 
+
+```{r, echo = FALSE}
+
+# create initial landscapes at steady state (i.e. after 100 timesteps)
+
+L0 <- init_list(100, runif_range = c(0.6,0.99), width = 25)
+
+p <- list(  
+  r = 1.0,  # max. regeneration rate of plants
+  b = 0.2,  # environmental quality
+  sigma = 0.1, # random annual variation of environmental quality
+  f = 0.9,  # local facilitation
+  alpha = 0, # water runoff
+  K = 0.8, # carrying capacity of the system
+  c = 0.2, # local competition
+  m = 0.05, # intrinsic mortality of plants (inverse of av. lifespan)
+  v = 0.2, # attractant-decoy
+  p = 0.99, # associational resistance
+  L = 20, # Livestock density
+  q = 0, # hill exponent of functional response
+  h = 30, # handling time 
+  a = 0.3 # attack rate of livestock
+) 
+L100 <- update_list(L0, 50, p)
+
+#run <- ca(L0[[1]], livestock, p, t_max = 100)
+#plot(run)
+#summary(run)
+
+par(mfrow= c(1,1), mar = c(4,4,1,1), bty = "n")
+
+library(vioplot) 
+
+plot(NA,NA, xlim = c(0,50), ylim  = c(0,1), xlab = "time (years)", ylab = "vegetation cover" )
+vioplot(sapply(L100, function(l) summary(l)$cover[1]), at = 0, add = T, col = 'white',wex = 3, pchMed = "-", colMed = "white")
+
+# continue running in steps of 5 years but at increased environmental quality
+
+L <- L100
+p$b <- 0.1
+p$L <- 2
+
+for(i in seq(5,50, 5)) {
+L <- update_list(L, 5, p)
+vioplot(sapply(L, function(l) summary(l)$cover[1]), at = i, add = T, col = 'white',wex = 3, pchMed = "-", colMed = "white")
+}
+
+```
+
+Thus, the likely development of the landscape unfolds over time as the distribution of potential outcomes.  In this case example, degraded landscapes are exposed to even higher aridity, but grazing is drastically reduced as a management method. Only few landscapes recover within a comparatatively short period of 20-30 years. Most need longer, but all landscapes will recover eventually. 
+
+Only in situations very close to the tipping point a stochastic event would express in a split of the violin plots into persistent, bimodal distributions. It seems, however, that under the given model specification catastrophic shifts are a rare event. We will need to explore parameter space to find cases where this happens or add more stochasticity by adding further noise. 
+
+Note that the resulting vegetation state is closer to the overal average in greater landscapes (central limit theorem). However, large landscapes come with high computational costs and will limit simulations to smaller number of replicates, wich would reduce the reliability of the distribution kernel. For production use, i.e. for publication quality data, a tradeoff between small landscape size and high number of replicates must be found. An educated guess would be to use a small landscape size of 50 x 50 cells (i.e. 625m² = 1/16 hectare) and  run 1000 replicates to obtain reliable kernels. 
+
+## analysis of distributions
+
+Each model step represents a set of replicated landscapes that were exposed to a parameter set. 
+
+- kernel fitting
+- calculate percentages or thresholds
+
+<!-- In R, it is implemented through the density and the bkde function in the KernSmooth library (both included in the base distribution), the kde function in the ks library, the dkden and dbckden functions in the evmix library (latter for boundary corrected kernel density estimation for bounded support), the npudens function in the np library (numeric and categorical data), the sm.density function in the sm library. For an implementation of the kde.R function, which does not require installing any packages or libraries, see kde.R.
+-->
