@@ -8,11 +8,10 @@ The repository provides
 
 2. an interactive implementation for R Shiny. Opening the file [documentation/interactive_livestockmodel.Rmd](https://github.com/cascade-wp6/socialecological/blob/master/documentation/interactive_livestockmodel.Rmd) in RStudio allows you, after installation of some extra packages, to run the interactive app. 
 
-3. Functions for the simulation. The repository is also an R package and can be installed from within R using:
-  
+3. Functions for the simulation. This repository is also an R package and can be installed from within R using:
   ```
   install.packages("devtools")
-  devtools::install_github("fdschneider/caspr")
+  devtools::install_github("cascade-wp6/socialecological")
   ```
   
   
