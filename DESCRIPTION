@@ -1,0 +1,21 @@
+Package: socialecological
+Type: Package
+Title: The economics of catastrophic shifts in arid rangelands.
+Version: 0.0.1
+Date: 2016-01-14
+Author: Florian D. Schneider
+Maintainer: Florian D. Schneider <fd.schneider@senckenberg.de>
+URL: https://github.com/cascade/socialecological
+Description: Functions for a simulation study on  the economics of catastrophic shifts in arid rangelands. 
+License: MIT + file LICENSE
+Additional_repositories: https://github.com/fdschneider/
+Imports:
+    foreach,
+    caspr
+Suggests:
+    testthat,
+    doSNOW,
+    spatialwarnings,
+    knitr
+VignetteBuilder: knitr
+RoxygenNote: 5.0.1
