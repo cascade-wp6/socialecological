@@ -16,6 +16,7 @@
 #'   "landscape_list", which can be processed by the functions
 #'   \code{list_update()} and \code{summary()}.
 #' @export
+#' @import caspr
 #' 
 #' @examples
 #' 

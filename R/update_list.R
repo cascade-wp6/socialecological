@@ -9,6 +9,8 @@
 #    function ca() of the caspr package. This returns an updated version of the
 #    entire list that can be plotted or analysed afterwards.
 #' @export
+#' @import caspr 
+#' @import foreach
 #'
 #' @examples
 #' 
