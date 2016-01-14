@@ -1,0 +1,222 @@
+---
+title: "Notes on socio-economic modelling of rangelands"
+author: Florian D. Schneider
+date: "July 22nd, 2015"
+output: 
+  rmarkdown::tufte_handout:
+    fig_width: 4
+    fig_height: 4
+---
+
+\marginnote{Institut des Sciences de l'Evolution, Université Montpellier 2, CNRS, IRD, CC065, Place Eugène Bataillon, 34095 Montpellier Cedex 05, France}
+
+
+\vspace{3cm}
+
+\newthought{Last Thursday}, Diana an I had a skype conversation about how to integrate the biophysical/ecological models with a socio-economic perspective. One model that we developped in WP6 seems particularly well suited to discuss such aspects: we refer to it as the 'rangeland resilience model'. 
+
+
+# The rangeland resilience model
+
+
+```{r, echo=FALSE, warning=FALSE, message = FALSE}
+# ODE solving
+library(deSolve)
+
+source("../../CAS02_livestock/code/simfunctions.r")
+
+parallel = TRUE
+if(parallel) {
+# provides parallel backend
+library(foreach)
+library(doSNOW)
+
+workstation <-  list(host = "162.38.184.118", user = "florian",
+                     rscript = "/usr/lib/R/bin/Rscript",
+                     snowlib = "/usr/lib/R/library")
+
+workerlist <- c(rep("localhost", times = 3)) 
+
+cl <- makeSOCKcluster(workerlist, outfile='out_messages.txt')
+
+registerDoSNOW(cl)
+
+}
+
+# default parameters, global model without spatially-explicit effects
+
+defparms <- list(
+    m = 0.01,
+    r = 1,
+    b = 0.7, 
+    K = 0.9, 
+    a = 0.5,
+    h = 50,
+    L = 6, 
+    alpha = 0,
+    q = 0,
+    c = 0,
+    f = 0,
+    v = 0,
+    p = 0
+  )
+
+```
+
+
+
+I will quickly sum up the assumptions and definitions of the model that can be described as both a simplification/approximation of the spatially explicit cellular automata model that we also work with^[Kéfi, S., M. Rietkerk, M. van Baalen & M. Loreau. 2007. Local facilitation, bistability and transitions in arid ecosystems. *Theoretical Population Biology*. 71(3): 267-400.] ^[Kéfi, S., M. Rietkerk, C. L. Alados, Y. Pueyo, A. ElAich, V. Papanastasis & P. C. de Ruiter. 2007. Spatial vegetation patterns and imminent desertification in Mediterranean arid ecosystems. *Nature*. 449(7159):213-217], and an extension of a simple consumer-resource model of bistability in rangelands by Noy-Meir^[Noy-Meir, I. 1975. Stability of grazing systems: an application of predator-prey graphs. *Journal of Ecology* 63, 459-481.]. 
+
+The model by Noy-Meir is a graphical comparison of plant mortality and growth, which both are definite functions of current vegetation cover. Growth, i.e. the gain of vegetation per time, is logistic, which means it is increasing rapidly as vegetation cover increases, until a half saturation value is reached. From that point on, growth declines until carrying capacity of the system is reached where growth falls to 0 and vegetation cover reaches it's definite upper limit.
+Mortality is defined as a functional response of grazers, i.e. it increases linearly as cover increases, but soon reaches saturation, where grazing is limited by the time that animals need to handle and digest their resource. 
+The steady states of the system are defined as the intersections of both functions, i.e. the state where vegetation declines as fast as it grows. A range of parameters allow for two **alternative steady states**, a desert without vegetation and a vegetated landscape (Fig. 1, black points). Depending on the original vegetation cover of the landscape, it will develop into the one or the other. The threshold value is a well defined *unstable equilibrium* (Fig. 1, open points). 
+
+```{r, echo = FALSE, fig.margin = TRUE, fig.cap = "Graphical model for bistability of rangelands by Noy-Meir 1975. Growth (green) and Mortality (black) are both functions of vegetation cover. Many parameter sets produce two alternative stable states. "}
+
+
+parms <- defparms
+
+attractor(parms, pairapprox = FALSE, localvals = FALSE, las = 1, xlab = "vegetation cover")
+
+```
+
+
+Our model, being a pair-approximation of a two-state cellulara automata model, assumes that growth is depending not only on global cover, but also on the amount of vegetation in the local neighborhood, by the mechanism of local facilitation and competition. Similarly, grazing mortality is altered if plants have many neighbors due to attraction and diversion and the plants' shared investment in protective structures (i.e. associational resistance). 
+
+Those additions to the model extend the graphical analysis of Noy-Meir by the third dimension of local cover, which defines the steady states  of the system. Even if global cover is the same, the system might grow into the vegetated state or decline in the desert depending on the  average *local* configuration of the landscape, i.e. either a clustered or a homogeneous vegetation.
+
+
+```{r, echo = FALSE, fig.margin = TRUE, fig.cap = "Extension of graphical model includes the local cover, i.e. high or low clustering of vegetation. Growth (green) and Mortality (black) are both functions of global and local vegetation cover. The latter can be initialised with high clustering (upper starting points of arrows) and low clustering (lower starting points) Many parameter sets produce two alternative stable states. ", warning = FALSE, message = FALSE}
+
+
+parms <- defparms
+parms$L = 4
+parms$f = 0.8
+parms$b = 0.2
+parms$p = 0.9
+attractor(parms, pairapprox = TRUE, meanfield = FALSE, localvals = FALSE, las = 1, xlab = "vegetation cover")
+
+```
+
+
+A possible visualisation adds two alternative starting conditions, with highly clustered and homogeneous vegetation, as trajectory arrows to the original growth *vs.* mortality plot (Fig 2). It becomes apparent that while the stable equilibiria, the attractors, are well defined points, specified by one global cover and one local cover, the unstable equilibrium becomes more fuzzy: it now is a plane in variable space.
+While this is of minor importance for the investigation of the potantial alternative steady states of the system, which we traditionally investigate from the ecological perspective, this has some implications for the modelling of social-ecological dynamics as I will discuss below.
+
+First, as we are used to do it from the ecological perspective, we would investigate the effect of a change along a parameter gradient on the existence of alternative stable states. 
+The Noy-Meir model already visualizes the emergence of bistability along gradients of environmental quality or grazing pressure (Fig. 3). 
+
+
+```{r, echo = FALSE, fig.margin = TRUE, fig.cap = "Bifurcation diagrams along gradients of a) environmental quality $b$ and b) livestock density $L$. The stable equilibria (black) form alternative steady states only in a limited range along the gradient. The unstable equilibria (grey) cannot be visualised unambiguously, but are shown as average expectancy values.", warning = FALSE, message = FALSE, fig.height = 5.5}
+
+
+parms <- defparms
+parms$f = 0.8
+parms$b = 0.2
+parms$p = 0.9
+
+par(las = 1, bty = "n", mfrow = c(2,1), mar = c(4,4,0,0))
+bifurcation(parms, pairapprox = TRUE, meanfield = FALSE, "L", c(0,12), res = 101)
+text(0.05,1, "a)")
+bifurcation(parms, pairapprox = TRUE, meanfield = FALSE, "b", c(0,1), res =101)
+text(0.05,1, "b)")
+
+```
+
+
+This directly relates to the application of management methods, which can be translated as an additional term added or substracted to the parameters soil/environmental quality ($b$) or livestock density ($L$), as I discuss in the next section. 
+
+
+# Management methods in the model context
+
+We were talking about management methods that affect the major parameters of the model, soil and livestock. In the first place, those methods are changes along the x-axis of the bifurcation diagram, without fundamental effects on the *shape* of the lines.
+
+## Soil management
+
+Tilling, mulching or watering are methods that directly would improve the variable $b$ of our model, *i.e.* the global environmental quality which incorporates seed production and establishment, thus reproduction of plants.
+
+We can imagine the management method as an additive term to $b$, which would shift the entire system's bistability properties to the left. Or, it can be visualized as an arrow pointing from the current state of the system to a point to the right-hand side of it (Fig. 4).  
+As a consequence, the attractors of the system may change. A qualitative change may be observed if the improved $b$ value now allows or disallows for alternative stable states. This can mean that a previously degraded system now potentially can be restored, or that it now is forced into a new attractor leading to its imminent recovery, or that a vegetated system now is not longer at risk of experiencing a catastrophic shift because it is not longer in the bistability domain.
+
+
+```{r, echo = FALSE, fig.margin = TRUE, fig.cap = "Effect of management methods on the attractor of the landscape. A management method can move the system a) away from the threshold, reducing risk of degradation, b) out of the bistability domain, warranting recovery towards the vegetated attractor, c) across the threshold of the bistability domain making recovery possible in principle.", warning = FALSE, message = FALSE}
+
+
+parms <- defparms
+parms$f = 0.8
+parms$b = 0.2
+parms$p = 0.9
+par(las = 1, bty = "n")
+bifurcation(parms, pairapprox = TRUE, meanfield = FALSE, "b", c(0,1), res =101)
+arrows(c(0.22,0.35,0.7),c(0.2,0.4,0.3),c(0.42,0.55,0.9),c(0.2,0.4,0.3))
+
+text(c(0.22,0.35,0.7)-0.06,c(0.2,0.4,0.3), c("c)", "a)", "b)") )
+```
+
+
+In a mean-field model, those methods do not alter the system permanently, *i.e.* once the management method is interrupted, the previous attractor is restored. However, the pair-approximation approach allows for a inert alteration of the unstable equilibrium, since the short term application of a management measure would alter not only the vegetation cover but also the spatial structure, thus changing the threshold values of a catastrophic transition for the time being.
+If this change of spatial structure is positive, the effect of the management method would be a sustainable,  long-term risk reduction.
+
+Diana asks which changes would cause fundamental changes in the *shape* of the bifurcation graph. This now would require to include feedbacks of the landuse practice with some other parameter of the model and thus brings us to some multi-dimensional thinking in parameter space, for instance if livestock is responding to vegetation cover dynamically, but we exclude this from the model exploration for reasons of simplicity. Noy-Meir discusses this case in his 1975 paper.
+
+## Livestock management
+
+Still livestock is the second major land use management practice that we can investigate within CASCADE. A remaining task will be to parameterize the livestock model for realistic animal densities and to translate per capita feeding rates to a *per hectare* dimension. To achieve that the handling time and attack rate terms must be chosen to generate realistic mortalities per livestock individual per hectare. Our collaborator Andres Baeza has developed a model for livestock rotation that provides a potential starting point here.
+
+Management practices that affect livestock densities or impact range from fencing to protection or supplementary fodder. We will need to define some use cases that reflect management practices that are well represented by the models' parameters. I imagine that most methods boil down to reducing or increasing the livestock density in a given area. Thus, similar to the soil management above, livestock management methods are designed to shift the systems state towards lower livestock rates, thus shifting to an attractor with an increased steady state vegetation cover.
+
+Some mechanisms provide interesting feedbacks with the local cover, *i.e.* patchiness of the system, particularly associational resistance.
+This mechanism is activated under high grazing, and negligible if individual grazing pressure is low. That is, the investment in protective structures is dynamically adjusted to the need for being protected. The implementation of the mechanism as being only of effect at low cover while the beneficial effect is zero if no grazing occurs.
+
+Thus, the short-time application of grazing pressure on a landscape alters the pattern formation processes. If grazing is reduced, the vegetation pattern  remains as it is and might cause the systems attractor to be fundamentally altered.
+
+# Obtaining predictions from models
+
+We discussed how the rather fundamental and qualitative model can be put to use for a socio-economic model that needs to have some quantitative dimensions as well. The model in the first place provides conclusions of the qualitative kind: "if that mechanism is strong, then the bistability domain will be smaller/larger".
+
+As discussed on the plenary meeting on Crete, the models are ill suited to undergo a precise parameterization for a particular field site. They also will not provide somewhat precise quantitative outcomes of the kind "if environmental quality is improved by value x, then the vegetation cover increases by value y". While Mara was very cautious that such claims should be made at all based on her rather fundamental model, I would say that we can achieve approximate quantitative estimates by incorporating parameter uncertainty. E.g. if we assume an environment has a variability in environmental quality then we can estimate the variability of the prediction value as well by simulating systems for each parameter. This allows to estimate maximum likelihood predictions for a given parameter array. In other words, we would make prior assumptions about a particular parameter to be around value x plus minus a standard deviation. From this distribution function, we can simulate a likely outcome of the vegetation cover y. The model might be invariant to some parameters' uncertainties or might respond strongly to others.  
+
+Following the discussion we had during the CASCADE plenary on Crete, we talked about the importance of communicating uncertainty of models if models are used to derive conclusions within the socio-economic workpackage. Awareness must be raised that the models are incomplete and rather simple approximations of nature, as opposed to high-detail reductionist models that include as much realism as possible.  
+
+Still, it would be interesting to relate the simple livestock model to the field sites of CASCADE, at least to those that are strongly influenced by grazing. I imagine we could turn parameters into two or three-level variables to classify at least the Cyprus, Crete and Ariola sites. They differ at least in aridity, grazing impact and even in the importance of some mechanisms as associational resistance or attractant decoy.
+
+# Terminology: Probability in the pair-approximation model
+
+The term of probability is confusing or does not apply at all in the context of the mean-field or pair-approximation model. The model is fully deterministic and thus, starting from one initial condition and one parameter set, the outcome is no matter of probability.
+I apply the term nonetheless when speaking about how the change in a parameter alters the "probability of the system to collapse". Strictly speaking, in ordinary differential equation models, no change is going to occur for a given starting condition and parameter set. But I integrate the concept of probability in at least four senses:
+
+- as an integration of **random starting conditions**: If the model is run repeatedly with *different starting conditions*, i.e. with a gradient of initial vegetation cover, we can speak of a probability that a random landscape will end up in one or another steady state/attractor.  
+- **uncertainty in parameters**: If the model is run repeatedly with variation in one or several parameters, the probability to end up in one or the other attractor can be determined in relation to the prior range of parameters.  
+- as an **interpolation of the stochastic model**: The cellular automata implementation or natural data never reach steady state equilibria, rather oscillate around the attractors, and thus will deviate from those in stochastic events, e.g. by random gain or loss of vegetation. These random events will trigger the crossing of a threshold, i.e. the sudden shift with a certain probability.
+- as an **interpolation of non-formulated stochastic events**: Stochastic events like fire or weather extremes are not part of the model. Still, assuming the system is at steady state, those events would be occurring stochastically over time and/or temporarily disturb the system with a random intensity. This translates into a risk of the system to fall to such events and experience sudden transition.
+
+Thus, even in the context of a deterministic model approach, one can translate into terms of 'probability'. Even a mathematical framework could be developed to assess those probabilities quantitatively. 
+
+# Timescales
+
+Our models tend to assume infinite timescales and we are looking at systems at equilibrium. This means we are looking at the potential *attractors* of the system, rather than transient dynamics towards a particular state.
+
+This is important when talking about predictions. The model are employed to  estimate potential steady states for a given set of parameters, and the threshold values leading to one or the other steady state. We compare the overlap of vegetated and degraded state along parameter gradients, but do not investigate how events leading to the one or the other differ. From this background, the history of a landscape is almost negligible. We only differentiate two starting conditions, extremely degraded and well vegetated, because over infinite time they eventually will end up in the one or the other state.
+
+If thinking about economics, like yield or investment costs, the timescale usually matters, e.g. 'how long must a management practice be applied?', 'how long does it take until we restored resilience of the system?'.
+
+The models could be used to estimate relative times or velocities of developing towards a certain attractor. This can be used to describe transient dynamics of systems even at intermediate states, i.e. between extremely degraded and well vegetated. Also the history of a landscape along a schedule of management practices can be recorded, e.g. application of a management practice with a certain frequency or over a certain period. Given stochastic events of disturbance, the questions then can be : 'What is the risk of a landscape with a given spatial pattern to degrade in the next two/ten/hundred years?', 'How long needs a management method be applied to lift the landscapes spatial pattern out of a high risk state?', 'What is the chance of recovery within the next 10/100 years if this method is applied compared to that method?'.
+
+# Closing thoughts
+
+The livestock model that we formulated so far has many links that would allow it's use within an social-ecological model. I propose that we
+
+1) define "risk" of degradation and "chance" of regeneration as target measures of an economic model  
+2) translate economic "yield" and "investment" into the framework of our ecological model  
+3) think about a framework for describing and measuring the quality and velocity of transient dynamics.
+
+This can translate the model into a social-ecological framework. Models on land-user decisionmaking or scenarios for management practice can be added as further layers of model complexity that define how $L$ or $b$ behave as a response to spatial structure or global cover.
+
+
+
+```{r, echo=FALSE}
+if(parallel) {
+stopCluster(cl)
+}
+```
+
+
