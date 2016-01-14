@@ -152,7 +152,7 @@ The goal is to run iterative simulations on a given parameter set to evaluate th
 
 Therefore, I wrote a set of functions which take a list of landscape objects (created by function `init_list()`) and updates it with the given parameter set for the requested time period (by applying function `update_list()`). If a parallel backend is provided, the single runs are processesed in parallel. The output is an updated list of landscape objects which can be summarized into a report of the distribution of outcomes. 
 
-```{r}
+```{r, echo = FALSE, warning = FALSE}
 library(foreach)
 
 # function init_list() creates a list of initial landscape objects 
@@ -164,8 +164,10 @@ init_list <- function(n, cover = NULL, width = 200, height = width, runif_range 
     if(is.null(cover)) inicover <- runif(1, runif_range[1], runif_range[2])
     init_landscape(c("1","0"), cover = c(inicover,1-inicover), width = width)
     
-  }
+  } -> L
 
+  class(L) <- "landscape_list"
+  return(L)
 }
 
 # function update_list() feeds any list of landscape objects into the simulation
@@ -179,8 +181,11 @@ update_list <- function(list, t_eval , parms) {
     run <- ca(l, livestock, parms_timeseries(parms, t_eval), t_max = t_eval, saveeach = t_eval)
     return(run$landscape[[2]])
     
-  }
-  
+  }-> L
+
+  class(L) <- "landscape_list"
+  return(L)
+
 }
 
 ```
@@ -190,7 +195,7 @@ update_list <- function(list, t_eval , parms) {
 
 Violin plots represent the distribution of the iterations current cover and can be interpreted as  probabilities. The distribution pattern varies with the number of replicates, the amount of environmental noise and size of the landscape. 
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning = FALSE}
 
 # create initial landscapes at steady state (i.e. after 100 timesteps)
 
@@ -202,17 +207,17 @@ p <- list(
   sigma = 0.1, # random annual variation of environmental quality
   f = 0.9,  # local facilitation
   alpha = 0, # water runoff
-  K = 0.8, # carrying capacity of the system
+  K = 0.9, # carrying capacity of the system
   c = 0.2, # local competition
   m = 0.05, # intrinsic mortality of plants (inverse of av. lifespan)
-  v = 0.2, # attractant-decoy
-  p = 0.99, # associational resistance
+  v = 0.0, # attractant-decoy
+  p = 0.9, # associational resistance
   L = 20, # Livestock density
   q = 0, # hill exponent of functional response
   h = 30, # handling time 
   a = 0.3 # attack rate of livestock
 ) 
-L100 <- update_list(L0, 50, p)
+L100 <- update_list(L0, 100, p)
 
 #run <- ca(L0[[1]], livestock, p, t_max = 100)
 #plot(run)
@@ -246,10 +251,56 @@ Note that the resulting vegetation state is closer to the overal average in grea
 
 ## analysis of distributions
 
-Each model step represents a set of replicated landscapes that were exposed to a parameter set. 
+Each model step represents a set of replicated landscapes that were exposed to a parameter set. I defined a method for the  `summary()` function that extracts the relevant information describing ecosystem state, that is, the total cover and the average local cover. In the terminal view, this function reports only the mean and standard deviation. But the full vectors can be extracted using the squared brackets or `summary(L)$cover` or `summary(L)$local`. The function also computes a binned Kernel density Estimate (using function `density()`) for total cover, which can be extracted by `summary(L)$kernel`.  
 
-- kernel fitting
-- calculate percentages or thresholds
+```{r, echo = FALSE}
+
+summary.landscape_list <- function(L) {
+  summary_out <- list(cover = as.vector(sapply(L, function(l) summary(l)$cover[1])),
+       localcover =  as.vector(sapply(L, function(l) summary(l)$local[1])),
+       clustering = mean(L$local/L$cover)
+  )
+  summary_out$kernel = density(summary_out$cover)
+  class(summary_out) <- c("summary_landscape_list","list")
+  return(summary_out)
+}
+
+print.summary_landscape_list <- function(x) {
+  cat("Assessing n =", length(x$cover), "landscapes: \n")
+  cat("\t mean total cover: \t",  round(mean(x$cover),4), "(±",  round(sd(x$cover),4),")","\n")
+  cat("\t mean local cover: \t",  round(mean(x$local),4), "(±",  round(sd(x$local),4),")","\n")
+  cat("\t clustering coefficient: \t", round(mean(x$local/x$cover),2) )
+}
+
+```
+
+A plot of the Kernels visualises the likelihood of the future states of the landscape. If vegetation cover is translated into some value or revenue, the kernel can be used to project the expected payoff of a management method in say 5, 10, 20 years. 
+
+```{r}
+summary(L100)
+```
+
+```{r, eval = FALSE}
+plot(summary(L100)$kernel, type = "l", xlim = c(0,1))
+```
+
+```{r, echo = FALSE}
+cols <- rev(grayscale(12)[1:6])
+          
+plot(summary(L100)$kernel, type = "l", xlim = c(0,1), col = cols[1])
+  
+p$b <- 0.1
+p$L <- 2
+L <- L100
+
+for(i in 2:6) {
+L <- update_list(L, 10, p)
+lines(summary(L)$kernel, type = "l", col = cols[i])
+}
+
+```
+
 
 <!-- In R, it is implemented through the density and the bkde function in the KernSmooth library (both included in the base distribution), the kde function in the ks library, the dkden and dbckden functions in the evmix library (latter for boundary corrected kernel density estimation for bounded support), the npudens function in the np library (numeric and categorical data), the sm.density function in the sm library. For an implementation of the kde.R function, which does not require installing any packages or libraries, see kde.R.
 -->
+
