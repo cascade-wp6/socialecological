@@ -13,6 +13,35 @@ output:
 
 The model was designed as a simplification of our previously developed grazing model. Besides reflecting the mechanisms of positive local feedbacks, local facilitation and associational resistance, it also implements negative local feedbacks, such as competition and attractant-decoy effects.
 
+It is a cellular automata model with cells that can take two possible cell states: occupied by vegetation (state: `1`) and unoccupied bare soil (state: `0`). Transition of cell states are defined as probabilities which are functions of the global cover $\rho_1$ (i.e. fraction of occupied cells) and the local cover $q_{1|1}$ (i.e. the proportion of occupied cells in the direct 4-cell neighborhood of the focal plant, i.e. an occupied cell). At each time step, these probabilities are evaluated against random numbers (i.e. the model is a probabilistic cellular automata) to see if a transition happens.  
+
+
+## model definition 
+
+Since there are two possible cell states, we have to define two probabilities of transition: the probability of **growth**, $w_{0,1}$, turning an empty cell into a vegetated, and the probability of **death**, $w_{0,1}$, removing vegetation from the cell.
+
+For **plant mortality**, we combine the intrinsic mortality of plants, i.e. the inverse of their average livespan, $m$, and the additional rate of death due to livestock grazing. The latter results from the feeding rate of animals, $F$, times the livestock density, $L$. Feeding rate is modelled as a type III functional response, that is, a nonlinear function that saturates against a maximum feeding rate of a consumer with increasing resource density:
+
+$$ F = \frac{a\rho_1^{q}}{1+ah\rho_1^{1+q}} $$
+
+The feeding rate $F$  of one consumer depends on its search efficiency on the landscape, $a$, i.e. the area browsed in per timestep, as well as the handling time $h$ invested for ingesting and digesting, i.e. the time for removing one resource item from the population. For grazing this term can be interpreted as the time that it takes to consume the equivalent of one resource unit. This requires some detailed specification: ... 
+
+The hill-coefficient $q$ defines the slowing down of feeding at very low resource cover. That can be due to several ecological processes such as resource accumulation (leading to a perceived dilution) or the occupation of inaccessible refuge areas (i.e. on inaccessible rocks). Since this definition overlaps somehow with other local interactions defined further below, it should be considered negligible for reasons of simplicity (i.e. $q = 0$).  
+
+To implement spatially-explicit effects on grazing mortality, we add the mechanism of attractant decoy which is observed in nature. Grazers are attracted by plant patches and therefore the risk of suffering from grazing increases. We assume this attractivity enhances search efficiency, $a$, locally by the value $v$
+
+$$ a = a^*  + v q_{1|1} $$
+
+
+
+$$ w_{1,0} = m + \frac{aL\rho_1^{1+q}}{1+ah\rho_1^{1+q}} $$
+
+
+    
+$$ w_{0,1} = \frac{r \rho_1^{1+\alpha} b (1-\frac{\rho_1}{K})}{1-\rho_1} $$
+
+
+
 ## parameters
 
 (More model details will follow)
