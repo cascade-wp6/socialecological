@@ -44,9 +44,22 @@ $$ w_{0,1} = \frac{r \rho_1^{1+\alpha} b (1-\frac{\rho_1}{K})}{1-\rho_1} $$
 
 ## parameters
 
-(More model details will follow)
-
-
+parameter | default value | unit   | definition
+-----| -----| -------- | ----------------------------------------------
+  r  |  1.0 |     | max. regeneration rate of plants
+  b  | 0.5  |     |environmental quality
+  sigma | 0 |     | environmental noise
+  f  |  0.8 |      |  local facilitation
+  alpha | 0 |    | water runoff
+  K  |  0.9 |    | carrying capacity of the system
+  c  |  0.2 |    | local competition
+  m  |  0.05|    | intrinsic mortality of plants (inverse of av. lifespan)
+  v  |  0.8 |    | attractant-decoy
+  p  |  0.99|    | associational resistance
+  L  |  5   |    | Livestock density
+  q  |  0   |    | hill exponent of functional response
+  h  |  50  |    | handling time 
+  a  |  0.2 |    | attack rate of livestock
 
 # The caspr package
 
