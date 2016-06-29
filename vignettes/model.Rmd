@@ -18,48 +18,87 @@ It is a cellular automata model with cells that can take two possible cell state
 
 ## model definition 
 
-Since there are two possible cell states, we have to define two probabilities of transition: the probability of **growth**, $w_{0,1}$, turning an empty cell into a vegetated, and the probability of **death**, $w_{0,1}$, removing vegetation from the cell.
+For vegetation mortality, $M$, we assume intrinsic plant mortality, i.e. the inverse of average lifespan, and add the mortality due to grazing risk as a classic type II functional response. 
 
-For **plant mortality**, we combine the intrinsic mortality of plants, i.e. the inverse of their average livespan, $m$, and the additional rate of death due to livestock grazing. The latter results from the feeding rate of animals, $F$, times the livestock density, $L$. Feeding rate is modelled as a type III functional response, that is, a nonlinear function that saturates against a maximum feeding rate of a consumer with increasing resource density:
+$$ M(\rho_1) = m \rho + \frac{a \rho_1 L}{1+a h \rho_1} \,,$$
 
-$$ F = \frac{a\rho_1^{q}}{1+ah\rho_1^{1+q}} $$
+where $m$ denotes the intrinsic mortality rate, $a$ and $h$ are the search efficiency and handling time of the nonlinear functional response (saturating at $1/h$) which is multiplied with the livestock density, $L$. Note that livestock density is defined in the unit number of grazers per area $[\frac{ind.}{ha}]$. Search efficiency $a$ is given in area browsed in per time and grazer individual $[\frac{ha}{y \times ind.}]$, and handling time $h$ is given in time per area consumed $[\frac{y}{ha}]$, which alltogether defines feeding rate as an area consumed per year by a single individual $[\frac{ha}{y \times ind.}]$. The overall change of cover, $M(\rho)$, is thus independent from the size and unit of the observed area $[\frac{1}{y}]$.
 
-The feeding rate $F$  of one consumer depends on its search efficiency on the landscape, $a$, i.e. the area browsed in per timestep, as well as the handling time $h$ invested for ingesting and digesting, i.e. the time for removing one resource item from the population. For grazing this term can be interpreted as the time that it takes to consume the equivalent of one resource unit. This requires some detailed specification: ... 
+The vegetation growth, $G$, is defined as a logistic growth function.
 
-The hill-coefficient $q$ defines the slowing down of feeding at very low resource cover. That can be due to several ecological processes such as resource accumulation (leading to a perceived dilution) or the occupation of inaccessible refuge areas (i.e. on inaccessible rocks). Since this definition overlaps somehow with other local interactions defined further below, it should be considered negligible for reasons of simplicity (i.e. $q = 0$).  
+$$ G(\rho_1) = r\rho_1(1-\frac{\rho_1}{K}) \,,$$
 
-To implement spatially-explicit effects on grazing mortality, we add the mechanism of attractant decoy which is observed in nature. Grazers are attracted by plant patches and therefore the risk of suffering from grazing increases. We assume this attractivity enhances search efficiency, $a$, locally by the value $v$
+where the intrinsic growth rate, $r$, is neutralized when cover approaches the global carrying capacity, $K$. This reflects the global competition of plants fo  resources of homoegeneous distribution, such as space: when all habitable space is occupied, plant growth falls to zero. 
+
+Global feedback mechanisms such as water runoff (negative effect on growth at low cover) or plant refuges against grazing for instance due to fencing (type III funuctional response) are added to the model using the following substitutions. 
+
+water runoff ... 
+
+Fencing will be leading to a sigmoidal functional response ... 
+
+
+## local feedbacks
+
+The basic model assumes mortality and growth to depend only on the global vegetation cover, and neglects their dependence on spatially-explicit effects. Here, we add plant-plant interactions at the local scale by taking the local cover, $q$, in the direct vicinity of plants into account. 
+By adding such interactions at the local level into the functions of growth and mortality, patterns emerge that act as positive or negative feedbacks on vegetation cover. 
+
+For vegetation growth we assume that the local environmental suitability is enhanced by local facilitation (Milchunas et al, Kéfi et al 2008). The reduction in growth rate, $r$, by aridity, i.e. the inverse of environmental quality $b$, is compensated by a function of $q_{0|1}$, the local density of cells in state 1 (i.e. vegetation) given that the focal cell is in state 0 (i.e. empty), and maximizes to one if the cell has four neighbors.
+
+$$ b = b^* + (1 - b^*)  f q_{0|1} \,,$$
+
+with the effect of aridity, $a_0$ in absence of local vegetation being increased to the value of $f$ if additive facilitation due to the presence of neighboring plants occurs. This term gradually determines the enhancement of the growth with an increasing local vegetation cover (maximizing at $q_{0|1} = 1$ if the cell has 4 neighbors). 
+
+As an opposing effect, we assume that local competition of plants inhibits colonisation locally by depleting nutrients or light. As cover increases and the interspace areas are closing in, the space available for rejuvenation approaches zero. 
+This is assuming that growth is diminished locally by competition, $c$. This affects carrying capacity rather than growth rate itself.
+
+$$ K = K^* (1 - c  q_{0|1})$$
+
+That is, if a cell has a fully vegetated local neighborhood, it's carrying capacity will be reduced by value $c$ ($c \geq K$). 
+
+Regarding plant mortality, we implement two interactions into the model. In sparse environments, high local cover will be attracting grazers and increase mortality of plants locally. We assume this attractivity enhances search efficiency, $a$, locally by the value $v$
 
 $$ a = a^*  + v q_{1|1} $$
 
+Thus, at low local cover feeding will be high on plants with neighbors, whereas at high cover the term has no effect since handling time is limiting consumption. An enhanced search efficiency will raise the critical thresholds for a collapse. 
+
+Opposing to that mechanism, plants in grazed habitats develop protective traits, such as thorns or cushion growth. They thereby provide protected habitat to their direct neighborhood, or share the investments in those traits with their neighbors. Overall grazing mortality thus is reduced through an increase in handling time by associational resistance, $p$, which affects the perceived local density of livestock. 
+
+$$ a = a^{**} (1- p q_{1|1}) $$ 
+
+Combining the attractant decoy and the associational resistance effect yields
+
+$$ a = (a^*  + v q_{1|1} ) (1- p q_{1|1}) $$ 
+
+Since $q_{1|1}$ and $q_{1|0}$ are spatially explicit expressions, these equations are referring to the situation at a particular location in space which is currently in one state or the other. The substitution into $M(\rho)$ and $G(\rho)$ yields transition probabilities, i.e. the probability for death and colonization for the given location, based on the global vegetation cover $\rho_1$ and the local vegetation cover $q_{1|1}$ or $q_{1|0}$ for vegetated or empty locations, respectively:
+
+$$ M(\rho_1,q_{1|1}) = w_{1,0} = m + \frac{(a^*  + v q_{1|1} ) (1- p q_{1|1}) L \rho_1}{1+ (a^*  + v q_{1|1} ) (1- p q_{1|1}) h \rho_1} $$
+
+$$ G(\rho_1,q_{1|0}) = w_{0,1} = \frac{r \rho_1 (b^* + (1 - b^*) f q_{0|1}) (1-\frac{\rho_1}{K^* (1 - c q_{0|1})})}{1-\rho_1} $$
 
 
-$$ w_{1,0} = m + \frac{aL\rho_1^{1+q}}{1+ah\rho_1^{1+q}} $$
-
-
-    
-$$ w_{0,1} = \frac{r \rho_1^{1+\alpha} b (1-\frac{\rho_1}{K})}{1-\rho_1} $$
-
-
-
-## parameters
+## Parameters
 
 parameter | default value | unit   | definition
 -----| -----| -------- | ----------------------------------------------
-  r  |  1.0 |     | max. regeneration rate of plants
-  b  | 0.5  |     |environmental quality
-  sigma | 0 |     | environmental noise
-  f  |  0.8 |      |  local facilitation
+  r  |  1.0 | $[\frac{1}{y}]$  | max. reproduction rate of vegetation per year
+  b  |  0.5 | unitless    |environmental quality, a factor that indicates quality of environment as compared to the best case scenario
+  K  |  0.9 | unitless   | carrying capacity of the system, a landscape  specific value that defines the max. potential cover
+  sigma | 0 | unitless    | environmental noise, standard deviation of random noise on environmental quality
   alpha | 0 |    | water runoff
-  K  |  0.9 |    | carrying capacity of the system
-  c  |  0.2 |    | local competition
-  m  |  0.05|    | intrinsic mortality of plants (inverse of av. lifespan)
-  v  |  0.8 |    | attractant-decoy
-  p  |  0.99|    | associational resistance
-  L  |  5   |    | Livestock density
+  f  |  0 | unitless     |  local facilitation, positive effect of plants   on the colonization probability in their direct neighborhood
+  c  |  0 | unitless   | local competition, negative effect of plants on    colonization probability in their direct neighborhood
+  m  |  0.05| $[\frac{1}{y}]$   | intrinsic mortality of plants (inverse of av. lifespan)
   q  |  0   |    | hill exponent of functional response
-  h  |  50  |    | handling time 
-  a  |  0.2 |    | attack rate of livestock
+  v  |  0 | unitless   | attractant-decoy effect, negative effect of plants    on mortality in their direct neighborhood
+  p  |  0 | unitless   | associational resistance, positive protection effects    of plants on each other against mortality due to grazing
+  L  |  2   | $[\frac{ind.}{ha}]$   | Livestock density
+  h  |  10  | $[\frac{y}{ha}]$   | handling time, time required to consume one hectar  of vegetation 
+  a  |  5 | $[\frac{ha}{y \times ind.}]$   | search efficiency of livestock, 
+
+
+# Model implementation
+
+Two spatially-explicit implementations of this model do exist and are contained in this repository: A model object for the cellular automata framework caspr for R, as well as a convenient dynamic implementation for Netlogo.  
 
 # The caspr package
 
