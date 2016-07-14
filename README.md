@@ -4,15 +4,18 @@ This repository explores the use of the livestock resilience model, a spatially-
 
 The repository provides 
 
-1. an [example](https://github.com/cascade-wp6/socialecological/blob/master/documentation/manual_simulations.pdf) for the use of the R package [caspr] as a simulation engine of the livestock resilience model. 
+1. R-Functions for the simulation and analysis of replicated timeseries. 
+2. an [example](https://github.com/cascade-wp6/socialecological/blob/master/documentation/manual_simulations.pdf) A mathematical description ([model.pdf](https://github.com/cascade-wp6/socialecological/raw/master/inst/doc/model.pdf)) and an implementation  of the livestock model ([livestock.r](https://github.com/cascade-wp6/socialecological/blob/master/R/livestock.R)) for the use with the R package [caspr](https://github.com/fdschneider/caspr) as a simulation engine.
+3. an interactive implementation for R Shiny. Opening the file [documentation/interactive_livestockmodel.Rmd](https://github.com/cascade-wp6/socialecological/blob/master/documentation/interactive_livestockmodel.Rmd) in RStudio allows you, after installation of some extra packages, to run the interactive app. 
 
-2. an interactive implementation for R Shiny. Opening the file [documentation/interactive_livestockmodel.Rmd](https://github.com/cascade-wp6/socialecological/blob/master/documentation/interactive_livestockmodel.Rmd) in RStudio allows you, after installation of some extra packages, to run the interactive app. 
 
-3. Functions for the simulation. This repository is also an R package and can be installed from within R using:
+This repository is also an R package and can be installed from within R using:
   ```
-  install.packages("devtools")
+  install.packages(c("devtools","animation"))
+  devtools::install_github("cascade-wp6/caspr")
   devtools::install_github("cascade-wp6/socialecological")
   ```
+  See the [package vignette](https://github.com/cascade-wp6/socialecological/raw/master/inst/doc/socialecological.pdf) for examples. 
   
   
 # LICENSE 
