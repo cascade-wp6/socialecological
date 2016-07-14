@@ -3,6 +3,9 @@ title: 'socialecological: Exploring socio-economics of arid rangelands'
 author: "Florian D. Schneider"
 date: '`r Sys.Date()`'
 output: 
+  pdf_document: 
+    toc: yes
+    toc_depth: 2
   output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{socialecological: Exploring socio-economics of arid rangelands}
@@ -23,7 +26,7 @@ This package vignette contains examples for the use of the functions provided in
 
 The livestock model has been developed as a spatially explicit version of a graphical model deviced by Noy-Meir 1975^[Noy-Meir, I. 1975. Stability of grazing systems: an application of predator-prey graphs. *Journal of Ecology* 63, 459-481.] which explained alternative stable states in rangelands from the logistic growth of plants and the non-linear feeding response of herbivore grazers. The intersections of plant growth and mortality define the potential steady states of the system. 
 
-The livestock model adds spatially explicit positive and negative feedbacks to the terms of growth and mortality which are based on assumptions of local facilitation and local competition, as well as plant defensive traits against grazing and attractant decoy effects. 
+The livestock model adds spatially explicit positive and negative interactions to the terms of growth and mortality which are based on assumptions of local facilitation and local competition, as well as plant defensive traits against grazing and attractant decoy effects. 
 
 While these assumptions define the shape of growth and mortality along the dual gradient of vegetation cover and spatial structure, the livestock rates and basic productivity of the system define the absolute extend of mortality and growth respectively. 
 
@@ -31,6 +34,7 @@ There is a range of parameter combinations that allow for alternative stable sta
 
 The basins of attraction can be approached in a pair-approximation simplification of the model. However, only the stochastic noise of the cellular automata allows for an investigation of likelihood of future outcomes. Thus, by adding further stochastic elements to the model, we can assess uncertainties in terms of future revenue or success of a management method. 
 
+More details on the model can be found in the vignette example. 
 
 ## generate landscapes and run simulations using caspr
 

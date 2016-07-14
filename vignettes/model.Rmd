@@ -1,11 +1,18 @@
 ---
-title: "Simulations of livestock resilience model with caspr"
+title: "socialecological: Simulations of livestock resilience model with caspr"
 author: "Florian D. Schneider"
-date: "October 1st, 2015"
+date: "`r Sys.Date()`"
 output: 
-  rmarkdown::tufte_handout:
-    fig_width: 6
-    fig_height: 4
+  pdf_document: 
+    toc: yes
+    toc_depth: 2
+  output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{socialecological: Simulations of livestock resilience model with caspr}
+  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::rmarkdown}
+fontsize: 12pt
+geometry: margin=1.5in
 ---
 
 
