@@ -92,13 +92,13 @@ parameter | default value | unit   | definition
   K  |  0.9 | unitless   | carrying capacity of the system, a landscape  specific value that defines the max. potential cover
   sigma | 0 | unitless    | environmental noise, standard deviation of random noise on environmental quality
   alpha | 0 |    | water runoff
-  f  |  0 | unitless     |  local facilitation, positive effect of plants   on the colonization probability in their direct neighborhood
+  f  |  0.9 | unitless     |  local facilitation, positive effect of plants   on the colonization probability in their direct neighborhood
   c  |  0 | unitless   | local competition, negative effect of plants on    colonization probability in their direct neighborhood
   m  |  0.05| $[\frac{1}{y}]$   | intrinsic mortality of plants (inverse of av. lifespan)
   q  |  0   |    | hill exponent of functional response
   v  |  0 | unitless   | attractant-decoy effect, negative effect of plants    on mortality in their direct neighborhood
   p  |  0 | unitless   | associational resistance, positive protection effects    of plants on each other against mortality due to grazing
-  L  |  2   | $[\frac{ind.}{ha}]$   | Livestock density
+  L  |  1   | $[\frac{ind.}{ha}]$   | Livestock density
   h  |  10  | $[\frac{y}{ha}]$   | handling time, time required to consume one hectar  of vegetation 
   a  |  5 | $[\frac{ha}{y \times ind.}]$   | search efficiency of livestock, 
 
@@ -144,7 +144,7 @@ The option `width` allows to increase or decrease the landscape size (now $100 x
 Then, you can start a simulation using the default parameters (returning a warning at the end of the simulation) with
 
 ```{r}
-run <- ca(l, model = livestock, parms = livestock$parms)
+run <- ca(l, model = livestock, parms = livestock$parms, t_max = 50)
 plot(run)
 summary(run)
 ```
@@ -159,8 +159,8 @@ Of course, you will want to modify the parameters (remember that `?livestock ` s
 pp <- livestock$parms
 pp$b <- 0.1
 pp$p <- 0.2
-pp$L <- 12
-run <- ca(l, model = livestock, parms = pp, t_max = 200)
+pp$L <- 1.2
+run <- ca(l, model = livestock, parms = pp, t_max = 50)
 plot(run)
 ```
 

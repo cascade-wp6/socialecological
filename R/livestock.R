@@ -35,27 +35,33 @@ livestock$cols <- c("black", "white")
 # a list of default model parameters, used to validate input parameters. 
 livestock$parms <- list(  
   r = 1.0,  # max. regeneration rate of plants
-  b = 0.5,  # environmental quality
+  b = 0.4,  # environmental quality
   sigma = 0, #
-  f = 0.8,  # local facilitation
+  f = 0.9,  # local facilitation
   alpha = 0, # water runoff
   K = 0.9, # carrying capacity of the system
-  c = 0.2, # local competition
+  c = 0.0, # local competition
   m = 0.05, # intrinsic mortality of plants (inverse of av. lifespan)
-  v = 0.8, # attractant-decoy
-  p = 0.99, # associational resistance
-  L = 5, # Livestock density
+  v = 0.0, # attractant-decoy
+  p = 0.0, # associational resistance
+  L = 1, # Livestock density
   q = 0, # hill exponent of functional response
-  h = 50, # handling time 
-  a = 0.2 # attack rate of livestock
+  h = 10, # handling time 
+  a = 5 # attack rate of livestock
 ) 
 # an update function
 livestock$update <- function(x_old, parms, subs = 12) {
   
   x_new <- x_old
   
-  climate <- parms$b 
-  if(parms$sigma != 0)  climate <- climate * abs(rnorm(1, 1, parms$sigma))
+  if(length(parms$b) > 1) {
+    climate <- parms$b[i]  
+  } else {
+    climate <- parms$b 
+  }
+  
+  if(parms$sigma > 0)  climate <- climate * abs(rnorm(1, 1, parms$sigma))
+  
   
   for(s in 1:subs) {
     
