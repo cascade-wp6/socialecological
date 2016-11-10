@@ -24,7 +24,7 @@ summary.landscape_list <- function(L) {
                       localcover =  as.vector(sapply(L, function(l) summary(l)$local[1])),
                       clustering = mean(L$local/L$cover)
   )
-  summary_out$kernel = density(summary_out$cover)
+  summary_out$kernel = betakernel(summary_out$cover)
   class(summary_out) <- c("summary_landscape_list","list")
   return(summary_out)
 }
