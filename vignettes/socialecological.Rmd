@@ -207,6 +207,7 @@ Violin plots represent the distribution of the iterations current cover and can 
 ```{r, warning = FALSE}
 
 library(vioplot) 
+library(evmix)
 
 plot(NA,NA, xlim = c(0,50), ylim  = c(0,1), xlab = "time (years)", ylab = "vegetation cover" )
 vioplot(sapply(L100, function(l) summary(l)$cover[1]), at = 0, add = T, col = 'white',wex = 3, pchMed = "-", colMed = "white")
