@@ -5,7 +5,7 @@ This repository explores the use of the livestock resilience model, a spatially-
 The repository provides 
 
 1. R-Functions for the simulation and analysis of replicated timeseries. 
-2. an [example](https://github.com/cascade-wp6/socialecological/blob/master/documentation/manual_simulations.pdf) A mathematical description ([model.pdf](https://github.com/cascade-wp6/socialecological/raw/master/inst/doc/model.pdf)) and an implementation  of the livestock model ([livestock.r](https://github.com/cascade-wp6/socialecological/blob/master/R/livestock.R)) for the use with the R package [caspr](https://github.com/fdschneider/caspr) as a simulation engine.
+2. an [example manual](https://github.com/cascade-wp6/socialecological/blob/master/documentation/manual_simulations.pdf) as well as the mathematical description of the model ([model.pdf](https://github.com/cascade-wp6/socialecological/raw/master/inst/doc/model.pdf)) and an implementation  of the livestock model ([livestock.r](https://github.com/cascade-wp6/socialecological/blob/master/R/livestock.R)) for the use with the R package [caspr](https://github.com/fdschneider/caspr) as a simulation engine.
 3. an interactive implementation for R Shiny. Opening the file [documentation/interactive_livestockmodel.Rmd](https://github.com/cascade-wp6/socialecological/blob/master/documentation/interactive_livestockmodel.Rmd) in RStudio allows you, after installation of some extra packages, to run the interactive app. 
 
 
