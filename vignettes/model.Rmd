@@ -87,8 +87,8 @@ $$ G(\rho_1,q_{1|0}) = w_{0,1} = \frac{r \rho_1 (b^* + (1 - b^*) f q_{0|1}) (1-\
 
 parameter | default value | unit   | definition
 -----| -----| -------- | ----------------------------------------------
-  r  |  1.0 | $[\frac{1}{y}]$  | max. reproduction rate of vegetation per year
-  b  |  0.5 | unitless    |environmental quality, a factor that indicates quality of environment as compared to the best case scenario
+  r  |  1.0 | $[\frac{1}{y}]$  | max. reproduction rate of vegetation per year (effectively this has the same effect as K and schould not be altered)
+  b  |  0.5 | unitless    | environmental quality, a factor that indicates quality of environment as compared to the best case scenario
   K  |  0.9 | unitless   | carrying capacity of the system, a landscape  specific value that defines the max. potential cover
   sigma | 0 | unitless    | environmental noise, standard deviation of random noise on environmental quality
   alpha | 0 |    | water runoff
@@ -116,7 +116,7 @@ Installation instructions and further information can be found on the package [r
 In short, you only need a running version of R installed on your computer. All package dependencies will be installed automatically. Launch R and run: 
 
 ```{r, eval = FALSE}
-install.packages("devtools")
+install.packages(c("devtools"))
 devtools::install_github("fdschneider/caspr")
 devtools::install_github("cascade-wp6/socialecological")
 ```
@@ -186,7 +186,44 @@ cover <- tail(run$cover[['1']], 100)
 summary(cover)
 ```
 
-There are further functions currently under development that allow to run a whole array of parameters. I will keep you updated about this. 
+
+## iterative simulations
+
+This study is about probabilistic analysis of landscape dynamics, thus an iterative simulation of landscapes over short time periods is required. To provide this, there are three functions:
+
+- `init_list()` : creates a data object of class `"landscape_list"` containing multiple replicates of a landscape object with random starting conditions. 
+- `update_list()` : simulates one or several timesteps for each of the landscape objects in a list created using `init_list()`.
+- `summary.landscape_list()` : a method of the summary function that provides basic statistics for a landscape list object, including a density distribution kernel estimation. 
+
+```{r}
+
+L0 <- init_list(100, runif_range = c(0.6,0.99), width = 25)
+
+p <- list(  
+   r = 1.0,  # max. regeneration rate of plants
+   b = 0.2,  # environmental quality
+   sigma = 0.1, # random annual variation of environmental quality
+   f = 0.9,  # local facilitation
+   alpha = 0, # water runoff
+   K = 0.9, # carrying capacity of the system
+   c = 0.2, # local competition
+   m = 0.05, # intrinsic mortality of plants (inverse of av. lifespan)
+   v = 0.0, # attractant-decoy
+   p = 0.9, # associational resistance
+   L = 20, # Livestock density
+   q = 0, # hill exponent of functional response
+   h = 30, # handling time 
+   a = 0.3 # attack rate of livestock
+   ) 
+   
+ L100 <- update_list(L0, 100, p)
+ summary(L100)
+ 
+ 
+``` 
+
+To access raw data of the landscape list, call `summary(L100)$cover` or `summary(L100)$kernel`. 
+
 
 ## contribute 
 

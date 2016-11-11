@@ -61,19 +61,19 @@ The function `ca()` is the core function of caspr and applies a cellular automat
 ```{r}
 p <- list(  
   r = 1.0,  # max. regeneration rate of plants
-  b = 0.2,  # environmental quality
+  b = 0.3,  # environmental quality
   sigma = 0, # environmental noise
-  f = 0.9,  # local facilitation
+  f = 0.6,  # local facilitation
   alpha = 0, # water runoff
   K = 0.9, # carrying capacity of the system
   c = 0.2, # local competition
   m = 0.05, # intrinsic mortality of plants (inverse of av. lifespan)
   v = 0.8, # attractant-decoy
   p = 0, # associational resistance
-  L = 10, # Livestock density
+  L = 1, # Livestock density
   q = 0, # hill exponent of functional response
-  h = 50, # handling time 
-  a = 0.2 # attack rate of livestock
+  h = 10, # handling time 
+  a = 5 # attack rate of livestock
 ) 
 
 r <- ca(l, model = livestock, parms = p, t_max = 100)
@@ -113,6 +113,7 @@ temp <- with(p, b*rnorm(100, 1, sigma))
 lines(temp, col = "red")     
 ```
 
+If facilitation effects are strong, the climate variation does not have much of an effect since local conditions are defined by parameter $f$ rather than environmental quality, $b$. However, if facilitation is of minor importance, the variation over time can be strongly affected by climatic noise. Generally, climatic stochasticity is expected to be of relevance particularly in systems close to the tipping point. The likelihood of degradation might be enhanced by an increased amplitude of the climate extremes, i.e. a large sigma. 
 
 ## set parameter time series
 
@@ -135,8 +136,8 @@ p <- list(
   p = 0.99, # associational resistance
   L = rep(c(0,15), each = 2), # Livestock density
   q = 0, # hill exponent of functional response
-  h = 50, # handling time 
-  a = 1.0 # attack rate of livestock
+  h = 10, # handling time 
+  a = 5 # attack rate of livestock
 ) 
 
 
@@ -165,20 +166,21 @@ L0 <- init_list(100, runif_range = c(0.6,0.99), width = 25)
 
 p <- list(  
   r = 1.0,  # max. regeneration rate of plants
-  b = 0.2,  # environmental quality
-  sigma = 0.1, # random annual variation of environmental quality
-  f = 0.9,  # local facilitation
+  b = 0.3,  # environmental quality
+  sigma = 0, #
+  f = 0.7,  # local facilitation
   alpha = 0, # water runoff
   K = 0.9, # carrying capacity of the system
-  c = 0.2, # local competition
+  c = 0.0, # local competition
   m = 0.05, # intrinsic mortality of plants (inverse of av. lifespan)
   v = 0.0, # attractant-decoy
-  p = 0.9, # associational resistance
-  L = 20, # Livestock density
+  p = 0.0, # associational resistance
+  L = 2, # Livestock density
   q = 0, # hill exponent of functional response
-  h = 30, # handling time 
-  a = 0.3 # attack rate of livestock
+  h = 10, # handling time 
+  a = 5 # attack rate of livestock
 ) 
+
 L100 <- update_list(L0, 100, p)
 
 summary(L100)
@@ -204,33 +206,44 @@ summary(L120)
 
 Violin plots represent the distribution of the iterations current cover and can be interpreted as  probabilities. The distribution pattern varies with the number of replicates, the amount of environmental noise and size of the landscape. 
 
-```{r, warning = FALSE}
+```{r, warning = FALSE, message=FALSE}
 
 library(vioplot) 
-library(evmix)
 
-plot(NA,NA, xlim = c(0,50), ylim  = c(0,1), xlab = "time (years)", ylab = "vegetation cover" )
-vioplot(sapply(L100, function(l) summary(l)$cover[1]), at = 0, add = T, col = 'white',wex = 3, pchMed = "-", colMed = "white")
 
-# continue running in steps of 5 years but at increased environmental quality
+plot(NA,NA, 
+     xlim = c(0,50), ylim  = c(0,1), 
+     xlab = "time (years)", 
+     ylab = "vegetation cover" )
+
+vioplot(sapply(L100, function(l) summary(l)$cover[1]), 
+        at = 0, add = T, col = 'white', 
+        wex = 3, pchMed = "-", colMed = "white")
+
+# continue running in steps of 5 years but at increased 
+# environmental quality
 
 L <- L100
-p$b <- 0.1
-p$L <- 2
+p$b <- 0.15
+p$sigma = 0.2
+p$L <- 1.7
 
 for(i in seq(5,50, 5)) {
 L <- update_list(L, 5, p)
-vioplot(sapply(L, function(l) summary(l)$cover[1]), at = i, add = T, col = 'white',wex = 3, pchMed = "-", colMed = "white")
+
+vioplot(sapply(L, function(l) summary(l)$cover[1]),
+        at = i, add = T, col = 'white',
+        wex = 3, pchMed = "-", colMed = "white")
 }
 
 ```
 
-The violin plot is a combination of a boxplot and a distribution kernel. The kernel itself is stored in the output created by the summary function and can be assessed for further analysis, e.g. to match it with economic revenue of a particular landscape state. 
+The violin plot is a combination of a boxplot and a distribution kernel. The kernel itself is stored in the output created by the summary function and can be assessed for further analysis, e.g. to match it with economic revenue of a particular landscape state. The boundary corrected kernel density estimation  is derived using the function `dbckden()` of package `evmix` and is wrapped into the function `betakernel()` provided with this package.  It defaults to parameters: `bcmethod = "beta1", lambda = 0.2, xmax = 1`. 
 
 ```{r}
 
 plot(summary(L100)$kernel, type = "l", xlim = c(0,1), col = "grey60")
-  
+
 lines(summary(L110)$kernel, type = "l", col = "grey30")
 lines(summary(L120)$kernel, type = "l", col = "grey10")
 
