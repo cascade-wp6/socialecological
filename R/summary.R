@@ -11,6 +11,7 @@
 #'  \item{\code{$kernel}}{Stuff}
 #' }
 #' 
+#' @import evmix
 #' @export
 #'
 #' @examples

@@ -11,7 +11,8 @@ License: MIT + file LICENSE
 Additional_repositories: https://github.com/fdschneider/
 Imports:
     foreach,
-    caspr
+    caspr, 
+    evmix
 Suggests:
     testthat,
     doSNOW,
