@@ -207,18 +207,18 @@ In the background, more information is computed that will be explained in the fo
 
 To translate vegetation cover into a measure of productivity in terms of input for the livestock production, we need to calculate the amount of plants that is likely to die of grazing in the upcoming timestep, as a proxy for the quantity of plant biomass that is eaten. 
 
-The function that produces this output is `feed()` which can be applied to a single lanscape object and returns the number of plants, normalised per hectar, that is about to fall to livestock feeding.
+The function that produces this output is `feed()` which can be applied to a single lanscape object and returns the number of plants, normalised per hectar, that is about to fall to livestock feeding. Remember to enter the desired set of parameters, otherwise the function will calculate the feeding for the default parameterset!
 
 ```{r}
 
-feed(L100[[1]])
+feed(L100[[1]], parms = p)
 
 ```
 
 The summary function internally calculates this for a given list of landscape objects. It can be accessed as a vector by calling
 
 ```{r}
-summary(L100)$feed
+summary(L100, parms = p)$feed
 ```
 
 ## visualisation and analysis
@@ -283,8 +283,8 @@ plot(NA,NA,
 
 L <- L100
 p$b <- 0.15
-p$f <-0.6
-p$sigma = 0.2
+p$f <- 0.6
+p$sigma <- 0.2
 p$L <- 1.1
 
 vioplot(summary(L, parms = p)$feed, 
