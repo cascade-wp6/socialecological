@@ -200,7 +200,26 @@ summary(L120)
 
 ```
 
+Note that the summary function returns a set of statistics for a list of landscape objects. A call like `summary(L100)` returns the most obvious overview statistics. The single values for each landscape can be called using the `$` selector, e.g. `summary(L100)$cover` will return a vector with the vegetation cover of each landscape object in the list. 
+In the background, more information is computed that will be explained in the following sections. 
 
+## lanscape productivity
+
+To translate vegetation cover into a measure of productivity in terms of input for the livestock production, we need to calculate the amount of plants that is likely to die of grazing in the upcoming timestep, as a proxy for the quantity of plant biomass that is eaten. 
+
+The function that produces this output is `feed()` which can be applied to a single lanscape object and returns the number of plants, normalised per hectar, that is about to fall to livestock feeding.
+
+```{r}
+
+feed(L100[[1]])
+
+```
+
+The summary function internally calculates this for a given list of landscape objects. It can be accessed as a vector by calling
+
+```{r}
+summary(L100)$feed
+```
 
 ## visualisation and analysis
 
@@ -216,7 +235,7 @@ plot(NA,NA,
      xlab = "time (years)", 
      ylab = "vegetation cover" )
 
-vioplot(sapply(L100, function(l) summary(l)$cover[1]), 
+vioplot(summary(L100)$cover, 
         at = 0, add = T, col = 'white', 
         wex = 3, pchMed = "-", colMed = "white")
 
@@ -231,7 +250,7 @@ p$L <- 1.7
 for(i in seq(5,50, 5)) {
 L <- update_list(L, 5, p)
 
-vioplot(sapply(L, function(l) summary(l)$cover[1]),
+vioplot(summary(L)$cover,
         at = i, add = T, col = 'white',
         wex = 3, pchMed = "-", colMed = "white")
 }
@@ -250,3 +269,36 @@ lines(summary(L120)$kernel, type = "l", col = "grey10")
 ```
 
 
+More interesting than analysing cover would be analysing the output of the landscape for livestock production, i.e. the amount of plants that will be dying due to grazing. 
+
+```{r, warning = FALSE, message=FALSE}
+
+plot(NA,NA, 
+     xlim = c(0,50), ylim  = c(0,0.15), 
+     xlab = "time (years)", 
+     ylab = "plant output" )
+
+# continue running in steps of 5 years but at increased 
+# environmental quality
+
+L <- L100
+p$b <- 0.15
+p$f <-0.6
+p$sigma = 0.2
+p$L <- 1.1
+
+vioplot(summary(L, parms = p)$feed, 
+        at = 0, add = T, col = 'white', 
+        wex = 3, pchMed = "-", colMed = "white")
+
+for(i in seq(5,50, 5)) {
+L <- update_list(L, 5, p)
+
+vioplot(summary(L, parms = p)$feed,
+        at = i, add = T, col = 'white',
+        wex = 3, pchMed = "-", colMed = "white")
+}
+
+```
+
+This distorts the meaning of plant productivity in the light of plant biomass that is accessible to livestock feeding. It impressively illustrates the importance of the associational resistance which has its maximal effect at high cover. 
