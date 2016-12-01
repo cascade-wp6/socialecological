@@ -20,12 +20,13 @@
 #' summary(L0)
 #' 
 
-summary.landscape_list <- function(L) {
+summary.landscape_list <- function(L, parms = livestock$parms) {
   summary_out <- list(cover = as.vector(sapply(L, function(l) summary(l)$cover[1])),
                       localcover =  as.vector(sapply(L, function(l) summary(l)$local[1])),
-                      clustering = mean(L$local/L$cover)
+                      feed =  as.vector(sapply(L, function(l) feed(l, parms = parms)  ))
   )
-  summary_out$kernel = betakernel(summary_out$cover)
+  summary_out$clustering <- summary_out$localcover/summary_out$cover
+  summary_out$kernel = betakernel(summary_out$feed)
   class(summary_out) <- c("summary_landscape_list","list")
   return(summary_out)
 }
@@ -36,5 +37,5 @@ print.summary_landscape_list <- function(x) {
   cat("Assessing n =", length(x$cover), "landscapes: \n")
   cat("\t mean total cover: \t",  round(mean(x$cover),4), "(±",  round(sd(x$cover),4),")","\n")
   cat("\t mean local cover: \t",  round(mean(x$local),4), "(±",  round(sd(x$local),4),")","\n")
-  cat("\t clustering coefficient: \t", round(mean(x$local/x$cover),2) )
+  cat("\t clustering coefficient: \t", round(mean(x$clustering),2), "(±",  round(sd(x$clustering),2),")","\n" )
 }
