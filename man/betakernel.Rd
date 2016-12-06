@@ -15,6 +15,9 @@ betakernel(x, n = 512, lambda = 0.02, bcmethod = "beta1")
 
 \item{bcmethod}{}
 }
+\value{
+a list of x and y values. The y values describe the expected frequency of observations at value x.
+}
 \description{
 Title
 }

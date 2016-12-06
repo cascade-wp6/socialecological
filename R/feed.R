@@ -1,11 +1,12 @@
 #' Title
-#'
-#' @param l 
-#' @param parms 
-#'
-#' @return
+#' 
+#' @param l
+#' @param parms a list of parameter values. defaults to the livestock default parameter set.  
+#'   
+#' @return a single value: the expected number of plants dying from livestock
+#'   feeding on the given landscape l under the given parameter combination.
 #' @export
-#'
+
 feed <- function(l, parms = livestock$parms, factor = 1) {
 
     rho_one <- as.vector(sum(l$cells == "1")/(l$dim[1]*l$dim[2])) # get initial vegetation cover

@@ -4,7 +4,7 @@
 \alias{summary.landscape_list}
 \title{Summary method for landscape lists.}
 \usage{
-\method{summary}{landscape_list}(L)
+\method{summary}{landscape_list}(L, parms = livestock$parms)
 }
 \arguments{
 \item{L}{A list of landscape objects (may be of class "landscape_list").}
