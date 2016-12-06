@@ -121,7 +121,7 @@ Manipulations to the parameters over time will be required for the intended rese
 
 Thus, as required by the caspr package, the parameter set is given as a list of parameters, but each list entry can be either a single value or a vector representing the sequence of parameter values over time (in years). This is inflated by the requested time to evaluate using the function `parms_timeseries()` of caspr. 
 
-```{r}
+```{r, fig.cap = "timeseries of landscape cover (black line) under application of a rotational livestock scheme of two years with 2.5 livestock units per hectare and then two years rest. Climatic conditions (blue) decline due to global change. "}
 
 p <- list(  
   r = 1.0,  # max. regeneration rate of plants
@@ -134,7 +134,7 @@ p <- list(
   m = 0.05, # intrinsic mortality of plants (inverse of av. lifespan)
   v = 0.2, # attractant-decoy
   p = 0.99, # associational resistance
-  L = rep(c(0,15), each = 2), # Livestock density
+  L = rep(c(0,3.5), each = 2), # Livestock density
   q = 0, # hill exponent of functional response
   h = 10, # handling time 
   a = 5 # attack rate of livestock
@@ -146,10 +146,14 @@ plist <- parms_timeseries(p, 100)
 l <- init_landscape(c("1","0"), cover = c(0.8,0.2), width = 100)
 
 r <- ca(l, livestock, plist, t_max = 100, saveeach = 5)
+
+par(mar = c(4,4,1,4), las = 1)
 plot(r)
-lines(1:100, p$b, col = "blue")
+axis(4); mtext("environmental quality (blue)", side = 4, line = 2, las = 0)
+lines(1:100, plist[,"b"], col = "blue")
 
 ```
+
 
 # lists of landscape objects
 
@@ -194,16 +198,19 @@ p$b <- 0.1
 p$L <- 2
 
 L110 <- update_list(L100, 10, p)
-summary(L110)
 L120 <- update_list(L110, 10, p)
-summary(L120)
+L130 <- update_list(L120, 10, p)
+L140 <- update_list(L130, 10, p)
+L150 <- update_list(L140, 10, p)
+
+summary(L150)
 
 ```
 
 Note that the summary function returns a set of statistics for a list of landscape objects. A call like `summary(L100)` returns the most obvious overview statistics. The single values for each landscape can be called using the `$` selector, e.g. `summary(L100)$cover` will return a vector with the vegetation cover of each landscape object in the list. 
 In the background, more information is computed that will be explained in the following sections. 
 
-## lanscape productivity
+## landscape productivity
 
 To translate vegetation cover into a measure of productivity in terms of input for the livestock production, we need to calculate the amount of plants that is likely to die of grazing in the upcoming timestep, as a proxy for the quantity of plant biomass that is eaten. 
 
@@ -223,12 +230,11 @@ summary(L100, parms = p)$feed
 
 ## visualisation and analysis
 
-Violin plots represent the distribution of the iterations current cover and can be interpreted as  probabilities. The distribution pattern varies with the number of replicates, the amount of environmental noise and size of the landscape. 
+Violin plots represent the approximate distribution of the iterations current cover and can be interpreted as  probabilities. The distribution pattern varies with the number of replicates, the amount of environmental noise and size of the landscape. 
 
 ```{r, warning = FALSE, message=FALSE}
 
 library(vioplot) 
-
 
 plot(NA,NA, 
      xlim = c(0,50), ylim  = c(0,1), 
@@ -257,24 +263,15 @@ vioplot(summary(L)$cover,
 
 ```
 
-The violin plot is a combination of a boxplot and a distribution kernel. The kernel itself is stored in the output created by the summary function and can be assessed for further analysis, e.g. to match it with economic revenue of a particular landscape state. The boundary corrected kernel density estimation  is derived using the function `dbckden()` of package `evmix` and is wrapped into the function `betakernel()` provided with this package.  It defaults to parameters: `bcmethod = "beta1", lambda = 0.2, xmax = 1`. 
 
-```{r}
+## translation into biomass production for livestock
 
-plot(summary(L100)$kernel, type = "l", xlim = c(0,1), col = "grey60")
-
-lines(summary(L110)$kernel, type = "l", col = "grey30")
-lines(summary(L120)$kernel, type = "l", col = "grey10")
-
-```
-
-
-More interesting than analysing cover would be analysing the output of the landscape for livestock production, i.e. the amount of plants that will be dying due to grazing. 
+More interesting than analysing cover would be analysing the output of the landscape for livestock production, i.e. the amount of plants that will be dying due to grazing as estimated by the function `feed()` (see above). 
 
 ```{r, warning = FALSE, message=FALSE}
 
 plot(NA,NA, 
-     xlim = c(0,50), ylim  = c(0,0.15), 
+     xlim = c(0,50), ylim  = c(0,0.3), 
      xlab = "time (years)", 
      ylab = "plant output" )
 
@@ -302,3 +299,35 @@ vioplot(summary(L, parms = p)$feed,
 ```
 
 This distorts the meaning of plant productivity in the light of plant biomass that is accessible to livestock feeding. It impressively illustrates the importance of the associational resistance which has its maximal effect at high cover. 
+
+
+## density Kernel estimate 
+
+The violin plot is a combination of a boxplot and a distribution kernel. The vioplot function applies a gaussian data structure to approximate the density estimate. It cuts the violin plot at 0 and 1. This is not mathematically reflecting the structure of the proportional landscape cover data. 
+
+Instead, the summary function will calculate the kernel based on a beta distribution, which assumes proportional data limited between 0 and 1.
+
+The kernel itself is stored in the output created by the summary function and can be assessed for further analysis, e.g. to match it with economic revenue of a particular landscape state. The boundary corrected kernel density estimation  is derived using the function `dbckden()` of package `evmix` and is wrapped into the function `betakernel()` provided with this package.  It defaults to parameters: `bcmethod = "beta1", lambda = 0.2, xmax = 1`. 
+
+```{r}
+
+plot(summary(L100)$kernel, type = "l", xlim = c(0,1), ylim = c(0,13), col = "grey60")
+
+lines(summary(L110)$kernel, type = "l", col = "grey30")
+lines(summary(L120)$kernel, type = "l", col = "grey10")
+
+```
+
+The package also provides a vioplot function that plots the beta distributed density kernel estimate: `vioplot_beta()`. Note that different from the original `vioplot()` function, this does not assume a cutoff at a minimum and maximum of the data range. 
+
+```{r}
+
+vioplot_beta(summary(L100)$feed, summary(L110)$feed,
+             summary(L120)$feed, summary(L130)$feed,
+             summary(L140)$feed, summary(L150)$feed,
+        names = c("0","10","20","30","40","50"),
+         add = F, col = 'white', 
+        wex = 0.6, pchMed = "-", colMed = "white")
+
+```
+
