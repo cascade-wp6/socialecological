@@ -40,7 +40,14 @@ p <- list(
   a = 0.3 # attack rate of livestock
   ) 
   
+ 
+workerlist <- c(rep("localhost", times = parallel:::detectCores()-1)) 
+cl <- makeSOCKcluster(workerlist)
+registerDoSNOW(cl) 
+  
 L100 <- update_list(L0, 100, p)
+
+stopCluster(cl)
 
 }
 

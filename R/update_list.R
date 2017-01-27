@@ -11,6 +11,7 @@
 #' @export
 #' @import caspr 
 #' @import foreach
+#' @import doSNOW
 #'
 #' @examples
 #' 
@@ -33,12 +34,19 @@
 #'   a = 0.3 # attack rate of livestock
 #'   ) 
 #'   
+#'  
+#' workerlist <- c(rep("localhost", times = parallel:::detectCores()-1)) 
+#' cl <- makeSOCKcluster(workerlist)
+#' registerDoSNOW(cl) 
+#'   
 #' L100 <- update_list(L0, 100, p)
+#' 
+#' stopCluster(cl)
 #' 
 
 update_list <- function(list, t_eval , parms) {
   
-  foreach(l = list) %do% {
+  foreach(l = list, .packages = c("caspr", "livestock")) %dopar% {
     
     run <- ca(l, livestock, parms_timeseries(parms, t_eval), t_max = t_eval, saveeach = t_eval)
     return(run$landscape[[2]])
