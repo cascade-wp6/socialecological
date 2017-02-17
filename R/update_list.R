@@ -46,7 +46,7 @@
 
 update_list <- function(list, t_eval , parms) {
   
-  foreach(l = list, .packages = c("caspr", "livestock")) %dopar% {
+  foreach(l = list, .packages = c("caspr", "socialecological")) %dopar% {
     
     run <- ca(l, livestock, parms_timeseries(parms, t_eval), t_max = t_eval, saveeach = t_eval)
     return(run$landscape[[2]])
