@@ -50,4 +50,3 @@ L100 <- update_list(L0, 100, p)
 stopCluster(cl)
 
 }
-

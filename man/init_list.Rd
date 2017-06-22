@@ -36,4 +36,3 @@ Initialize a list of random landscape objects
 L0 <- init_list(100, runif_range = c(0.6,0.99), width = 25)
 
 }
-

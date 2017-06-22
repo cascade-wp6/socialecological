@@ -45,4 +45,3 @@ An unpublished, generalized model of positive and negative local feedbacks in ar
 F.D. Schneider
 }
 \keyword{datasets}
-

@@ -16,4 +16,3 @@ a single value: the expected number of plants dying from livestock
 \description{
 Title
 }
-

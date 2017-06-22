@@ -4,7 +4,7 @@
 \alias{betakernel}
 \title{Title}
 \usage{
-betakernel(x, n = 512, lambda = 0.02, bcmethod = "beta1")
+betakernel(x, n = 512, lambda = 0.01, bw = NULL, bcmethod = "beta1")
 }
 \arguments{
 \item{x}{}
@@ -21,4 +21,3 @@ a list of x and y values. The y values describe the expected frequency of observ
 \description{
 Title
 }
-
